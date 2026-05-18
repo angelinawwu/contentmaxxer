@@ -79,7 +79,7 @@ export default function Page() {
           getInputs: () => inputsRef.current!(),
           onProgress: (p) => setProgress(p),
         });
-        downloadBlob(blob, `contentmaxxer-${ts}.webm`);
+        downloadBlob(blob, `contentmaxxer-${ts}.mp4`);
       } else {
         setExporting("image");
         const blob = await exportPng(inputs);
@@ -99,7 +99,6 @@ export default function Page() {
       {/* Top bar */}
       <header className="h-12 px-4 flex items-center justify-between border-b border-border shrink-0">
         <div className="flex items-center gap-2">
-          <Sparkles size={16} className="text-accent" />
           <span className="text-sm font-semibold tracking-tight">Contentmaxxer</span>
         </div>
         <div className="flex items-center gap-2">
@@ -123,7 +122,7 @@ export default function Page() {
             ) : (
               <>
                 <Download size={14} />
-                Export {hasVideo ? "WebM" : "PNG"}
+                Export {hasVideo ? "MP4" : "PNG"}
               </>
             )}
           </Button>

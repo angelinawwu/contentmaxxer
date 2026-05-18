@@ -22,11 +22,7 @@ Open http://localhost:3000.
 
 ## Notes on video export
 
-The app composites your video into a canvas every frame and records via `canvas.captureStream()` + `MediaRecorder`. Output is **WebM** (VP9/Opus). Instagram's mobile app re-encodes WebM on upload; for the cleanest result, drop the file into the Photos app on macOS and AirDrop to your phone, or convert to MP4 locally:
-
-```bash
-ffmpeg -i contentmaxxer-*.webm -c:v libx264 -pix_fmt yuv420p -c:a aac out.mp4
-```
+The app encodes natively to **MP4 (H.264 + AAC)** in the browser using **WebCodecs** and **mp4-muxer** — no server, no ffmpeg, no big wasm download. Audio is pulled from the source video's track. Runs in Chrome, Edge, Arc, and recent Safari. The video plays back at 1x during export so it takes roughly as long as the clip.
 
 ## Shortcuts
 

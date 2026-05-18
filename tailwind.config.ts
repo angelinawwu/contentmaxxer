@@ -11,7 +11,7 @@ export default {
         border: "#26262b",
         muted: "#8a8a92",
         text: "#ededf0",
-        accent: "#7c5cff",
+        accent: "#ff5cab",
       },
       fontFamily: {
         sans: ["ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
