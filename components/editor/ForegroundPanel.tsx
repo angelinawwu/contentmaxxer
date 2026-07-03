@@ -102,6 +102,22 @@ export function ForegroundPanel() {
           onChange={(n) => setFgStyle({ radius: n })}
           unit="px"
         />
+        {!sideBySide && (
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted">Phone frame</span>
+            <button
+              onClick={() => setFgStyle({ frameEnabled: !fgStyle.frameEnabled })}
+              className={
+                "text-xs px-2 h-6 rounded-md border transition " +
+                (fgStyle.frameEnabled
+                  ? "bg-accent/15 border-accent/40 text-accent"
+                  : "bg-white/5 border-border text-muted hover:text-text")
+              }
+            >
+              {fgStyle.frameEnabled ? "On" : "Off"}
+            </button>
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-3">
           <Slider
             label="Offset X"

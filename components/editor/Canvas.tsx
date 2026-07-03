@@ -24,6 +24,7 @@ export function Canvas({ className, registerRefs }: Props) {
   const fgVid = useVideoSource(foreground.kind === "video" ? foreground.src : null);
   const fg2Img = useImageSource(foreground2.kind === "image" ? foreground2.src : null);
   const fg2Vid = useVideoSource(foreground2.kind === "video" ? foreground2.src : null);
+  const frameImg = useImageSource(fgStyle.frameEnabled ? "/Device.png" : null);
 
   const { w, h } = outputDimensions(aspect, { w: customWidth, h: customHeight });
 
@@ -58,6 +59,7 @@ export function Canvas({ className, registerRefs }: Props) {
       fg2NaturalH: fg2NatH,
       splitRatio,
       splitGap,
+      frameImage: frameImg.el,
     };
   };
 
@@ -68,7 +70,7 @@ export function Canvas({ className, registerRefs }: Props) {
       fg2Video: fg2Vid.el,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fgVid.el, fg2Vid.el, state]);
+  }, [fgVid.el, fg2Vid.el, frameImg.el, state]);
 
   // render loop
   useEffect(() => {
@@ -87,7 +89,7 @@ export function Canvas({ className, registerRefs }: Props) {
     raf = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(raf);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [w, h, bgImg.el, fgImg.el, fgVid.el, fg2Img.el, fg2Vid.el, state]);
+  }, [w, h, bgImg.el, fgImg.el, fgVid.el, fg2Img.el, fg2Vid.el, frameImg.el, state]);
 
   return (
     <div className={className}>

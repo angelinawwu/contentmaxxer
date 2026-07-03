@@ -21,6 +21,8 @@ export interface ForegroundStyle {
   offsetX: number; // -200..200 px on output scale
   offsetY: number;
   radius: number; // 0..96 px
+  /** Overlay a phone device frame (public/Device.png) on top of the foreground */
+  frameEnabled: boolean;
   shadow: {
     enabled: boolean;
     blur: number; // 0..120
@@ -109,6 +111,7 @@ const initialFgStyle: ForegroundStyle = {
   offsetX: 0,
   offsetY: 0,
   radius: 24,
+  frameEnabled: false,
   shadow: {
     enabled: true,
     blur: 60,

@@ -16,6 +16,49 @@ export interface RenderInputs {
   fg2NaturalH?: number;
   splitRatio?: number;
   splitGap?: number;
+  /** Phone device frame overlay (public/Device.png), drawn on top of the foreground */
+  frameImage?: HTMLImageElement | null;
+}
+
+/**
+ * Fractional inset of the transparent "screen" hole within the Device.png
+ * frame image, measured from the raw asset (1200×2457).
+ */
+const PHONE_FRAME_SCREEN = { left: 0.045, right: 0.955, top: 0.019, bottom: 0.98 };
+
+function computeScreenRectFromFrame(frameRect: { x: number; y: number; w: number; h: number }) {
+  const { left, right, top, bottom } = PHONE_FRAME_SCREEN;
+  return {
+    x: frameRect.x + frameRect.w * left,
+    y: frameRect.y + frameRect.h * top,
+    w: frameRect.w * (right - left),
+    h: frameRect.h * (bottom - top),
+  };
+}
+
+/** Draws `source` scaled/cropped to cover `rect` (like CSS background-size: cover). */
+function drawCover(
+  ctx: CanvasRenderingContext2D,
+  source: CanvasImageSource,
+  naturalW: number,
+  naturalH: number,
+  rect: { x: number; y: number; w: number; h: number },
+) {
+  if (!naturalW || !naturalH) return;
+  const rectRatio = rect.w / rect.h;
+  const srcRatio = naturalW / naturalH;
+  let drawW: number;
+  let drawH: number;
+  if (srcRatio > rectRatio) {
+    drawH = rect.h;
+    drawW = drawH * srcRatio;
+  } else {
+    drawW = rect.w;
+    drawH = drawW / srcRatio;
+  }
+  const dx = rect.x + (rect.w - drawW) / 2;
+  const dy = rect.y + (rect.h - drawH) / 2;
+  ctx.drawImage(source, dx, dy, drawW, drawH);
 }
 
 export function drawRoundedRect(
@@ -167,6 +210,23 @@ export function computeFgRect(
   return { x: cx - w / 2, y: cy - h / 2, w, h };
 }
 
+function stampShadow(
+  ctx: CanvasRenderingContext2D,
+  rect: { x: number; y: number; w: number; h: number },
+  radius: number,
+  shadow: ForegroundStyle["shadow"],
+) {
+  if (!shadow.enabled) return;
+  ctx.save();
+  ctx.shadowColor = hexWithAlpha(shadow.color, shadow.opacity);
+  ctx.shadowBlur = shadow.blur;
+  ctx.shadowOffsetY = shadow.offsetY;
+  ctx.fillStyle = "#000";
+  drawRoundedRect(ctx, rect.x, rect.y, rect.w, rect.h, radius);
+  ctx.fill();
+  ctx.restore();
+}
+
 export function drawForeground(
   ctx: CanvasRenderingContext2D,
   source: CanvasImageSource,
@@ -175,20 +235,45 @@ export function drawForeground(
   shadow: ForegroundStyle["shadow"],
 ) {
   ctx.save();
-  if (shadow.enabled) {
-    // Draw shadow by stamping the rounded rect first with shadow only.
-    ctx.save();
-    ctx.shadowColor = hexWithAlpha(shadow.color, shadow.opacity);
-    ctx.shadowBlur = shadow.blur;
-    ctx.shadowOffsetY = shadow.offsetY;
-    ctx.fillStyle = "#000";
-    drawRoundedRect(ctx, rect.x, rect.y, rect.w, rect.h, radius);
-    ctx.fill();
-    ctx.restore();
-  }
+  // Draw shadow by stamping the rounded rect first with shadow only.
+  stampShadow(ctx, rect, radius, shadow);
   drawRoundedRect(ctx, rect.x, rect.y, rect.w, rect.h, radius);
   ctx.clip();
   ctx.drawImage(source, rect.x, rect.y, rect.w, rect.h);
+  ctx.restore();
+}
+
+/**
+ * Draws the foreground behind a phone device frame (public/Device.png):
+ * the frame's outer bounding box is sized/positioned like a normal
+ * foreground rect, the source media is "cover" fit into the frame's
+ * transparent screen hole, then the frame image is drawn on top.
+ */
+function drawFramedForeground(
+  ctx: CanvasRenderingContext2D,
+  source: CanvasImageSource,
+  naturalW: number,
+  naturalH: number,
+  frameRect: { x: number; y: number; w: number; h: number },
+  radius: number,
+  shadow: ForegroundStyle["shadow"],
+  frameImage: HTMLImageElement,
+) {
+  ctx.save();
+  const screenRect = computeScreenRectFromFrame(frameRect);
+  ctx.save();
+  drawRoundedRect(
+    ctx,
+    screenRect.x,
+    screenRect.y,
+    screenRect.w,
+    screenRect.h,
+    Math.min(screenRect.w, screenRect.h) * 0.50,
+  );
+  ctx.clip();
+  drawCover(ctx, source, naturalW, naturalH, screenRect);
+  ctx.restore();
+  ctx.drawImage(frameImage, frameRect.x, frameRect.y, frameRect.w, frameRect.h);
   ctx.restore();
 }
 
@@ -248,6 +333,31 @@ export function renderFrame(ctx: CanvasRenderingContext2D, input: RenderInputs) 
   }
 
   if (input.fgSource && input.fgNaturalW > 0 && input.fgNaturalH > 0) {
+    if (input.fgStyle.frameEnabled && input.frameImage && input.frameImage.complete) {
+      // Size the frame a bit larger than the plain video/image would be at
+      // the same "Size" setting, so the frame reads as bigger than its content.
+      const frameSize = Math.min(1, input.fgStyle.size * 1.12);
+      const frameRect = computeFgRect(
+        W,
+        H,
+        input.frameImage.naturalWidth,
+        input.frameImage.naturalHeight,
+        frameSize,
+        input.fgStyle.offsetX,
+        input.fgStyle.offsetY,
+      );
+      drawFramedForeground(
+        ctx,
+        input.fgSource,
+        input.fgNaturalW,
+        input.fgNaturalH,
+        frameRect,
+        input.fgStyle.radius,
+        input.fgStyle.shadow,
+        input.frameImage,
+      );
+      return;
+    }
     const rect = computeFgRect(
       W,
       H,
