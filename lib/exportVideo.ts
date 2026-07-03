@@ -174,6 +174,7 @@ export async function recordVideo(opts: VideoExportOpts): Promise<Blob> {
 
   const duration = isFinite(video.duration) && video.duration > 0 ? video.duration : 0;
   if (duration === 0) throw new Error("Source video has no duration");
+  const totalFrames = Math.ceil(duration * fps);
 
   let cancelled = false;
   if (opts.signal) {
@@ -206,18 +207,20 @@ export async function recordVideo(opts: VideoExportOpts): Promise<Blob> {
       frame.close();
       frameIndex++;
 
-      const elapsed = (performance.now() - startedAt) / 1000;
-      const progress = Math.min(elapsed / duration, video.currentTime / duration);
+      const progress = Math.min(frameIndex / totalFrames, 1);
       opts.onProgress?.(Math.max(0, Math.min(1, progress)));
 
-      if (video.ended || video.currentTime >= duration - 0.01) {
+      if (frameIndex >= totalFrames) {
         resolve();
         return;
       }
-      // Throttle to target fps.
-      setTimeout(() => requestAnimationFrame(tick), Math.max(0, 1000 / fps - 4));
+      // Schedule next tick to maintain target fps cadence.
+      const elapsedMs = performance.now() - startedAt;
+      const targetNextMs = frameIndex * (1000 / fps);
+      const delay = Math.max(0, targetNextMs - elapsedMs);
+      setTimeout(tick, delay);
     };
-    requestAnimationFrame(tick);
+    tick();
   });
 
   opts.onProgress?.(1);
