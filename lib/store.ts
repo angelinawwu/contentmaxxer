@@ -1,7 +1,7 @@
 "use client";
 import { create } from "zustand";
 
-export type Aspect = "16:9" | "9:16";
+export type Aspect = "16:9" | "9:16" | "custom";
 export type Mode = "single" | "side-by-side";
 export type MediaKind = "image" | "video";
 
@@ -53,6 +53,8 @@ export interface BackgroundState {
 
 export interface EditorState {
   aspect: Aspect;
+  customWidth: number;
+  customHeight: number;
   mode: Mode;
   /** Which slot user last interacted with (for paste routing) */
   pasteTarget: "foreground" | "foreground2" | "background";
@@ -68,6 +70,8 @@ export interface EditorState {
 
   // setters
   setAspect: (a: Aspect) => void;
+  setCustomWidth: (n: number) => void;
+  setCustomHeight: (n: number) => void;
   setMode: (m: Mode) => void;
   setPasteTarget: (t: EditorState["pasteTarget"]) => void;
 
@@ -129,8 +133,15 @@ const initialBg: BackgroundState = {
   },
 };
 
+const MIN_DIM = 16;
+const MAX_DIM = 8192;
+export const clampDim = (n: number) =>
+  Number.isFinite(n) ? Math.round(Math.min(MAX_DIM, Math.max(MIN_DIM, n))) : MIN_DIM;
+
 export const useEditor = create<EditorState>((set, get) => ({
   aspect: "9:16",
+  customWidth: 1080,
+  customHeight: 1920,
   mode: "single",
   pasteTarget: "foreground",
   foreground: { ...initialFg },
@@ -145,6 +156,8 @@ export const useEditor = create<EditorState>((set, get) => ({
   },
 
   setAspect: (a) => set({ aspect: a }),
+  setCustomWidth: (n) => set({ customWidth: Number.isFinite(n) ? Math.round(n) : 0 }),
+  setCustomHeight: (n) => set({ customHeight: Number.isFinite(n) ? Math.round(n) : 0 }),
   setMode: (m) => set({ mode: m }),
   setPasteTarget: (t) => set({ pasteTarget: t }),
 
@@ -183,6 +196,8 @@ export const useEditor = create<EditorState>((set, get) => ({
   reset: () =>
     set({
       aspect: "9:16",
+      customWidth: 1080,
+      customHeight: 1920,
       mode: "single",
       foreground: { ...initialFg },
       foreground2: { ...initialFg },
@@ -197,6 +212,11 @@ export const useEditor = create<EditorState>((set, get) => ({
     }),
 }));
 
-export function outputDimensions(aspect: Aspect): { w: number; h: number } {
+export function outputDimensions(
+  aspect: Aspect,
+  custom?: { w: number; h: number },
+): { w: number; h: number } {
+  if (aspect === "custom")
+    return custom ? { w: clampDim(custom.w), h: clampDim(custom.h) } : { w: 1080, h: 1920 };
   return aspect === "16:9" ? { w: 1920, h: 1080 } : { w: 1080, h: 1920 };
 }

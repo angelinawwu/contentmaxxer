@@ -17,7 +17,7 @@ interface Props {
 export function Canvas({ className, registerRefs }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const state = useEditor();
-  const { aspect, foreground, foreground2, fgStyle, mode, background, splitRatio, splitGap } = state;
+  const { aspect, customWidth, customHeight, foreground, foreground2, fgStyle, mode, background, splitRatio, splitGap } = state;
 
   const bgImg = useImageSource(background.image.src);
   const fgImg = useImageSource(foreground.kind === "image" ? foreground.src : null);
@@ -25,7 +25,7 @@ export function Canvas({ className, registerRefs }: Props) {
   const fg2Img = useImageSource(foreground2.kind === "image" ? foreground2.src : null);
   const fg2Vid = useVideoSource(foreground2.kind === "video" ? foreground2.src : null);
 
-  const { w, h } = outputDimensions(aspect);
+  const { w, h } = outputDimensions(aspect, { w: customWidth, h: customHeight });
 
   // build a snapshot for renderFrame
   const buildInputs = (): RenderInputs => {

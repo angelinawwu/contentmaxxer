@@ -4,7 +4,7 @@ import { ForegroundPanel } from "@/components/editor/ForegroundPanel";
 import { BackgroundPanel } from "@/components/editor/BackgroundPanel";
 import { Toggle } from "@/components/ui/Toggle";
 import { Button } from "@/components/ui/Button";
-import { useEditor, outputDimensions } from "@/lib/store";
+import { useEditor, outputDimensions, clampDim } from "@/lib/store";
 import type { RenderInputs } from "@/lib/render";
 import { exportPng, downloadBlob } from "@/lib/exportImage";
 import { recordVideo } from "@/lib/exportVideo";
@@ -12,8 +12,21 @@ import { useEffect, useRef, useState } from "react";
 import { Download, RotateCcw, Loader2, Sparkles } from "lucide-react";
 
 export default function Page() {
-  const { aspect, setAspect, reset, foreground, foreground2, mode, pasteTarget, setForeground, setBgImage } =
-    useEditor();
+  const {
+    aspect,
+    setAspect,
+    customWidth,
+    customHeight,
+    setCustomWidth,
+    setCustomHeight,
+    reset,
+    foreground,
+    foreground2,
+    mode,
+    pasteTarget,
+    setForeground,
+    setBgImage,
+  } = useEditor();
   const inputsRef = useRef<(() => RenderInputs) | null>(null);
   const fgVideoRef = useRef<HTMLVideoElement | null>(null);
   const fg2VideoRef = useRef<HTMLVideoElement | null>(null);
@@ -65,7 +78,7 @@ export default function Page() {
   async function onExport() {
     if (!inputsRef.current || exporting) return;
     const inputs = inputsRef.current();
-    const { w, h } = outputDimensions(aspect);
+    const { w, h } = outputDimensions(aspect, { w: customWidth, h: customHeight });
     const ts = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
     try {
       if (hasVideo && fgVideoRef.current) {
@@ -108,8 +121,28 @@ export default function Page() {
             options={[
               { value: "9:16", label: "1080 × 1920" },
               { value: "16:9", label: "1920 × 1080" },
+              { value: "custom", label: "Custom" },
             ]}
           />
+          {aspect === "custom" && (
+            <div className="flex items-center gap-1.5">
+              <input
+                type="number"
+                value={customWidth}
+                onChange={(e) => setCustomWidth(Number(e.target.value))}
+                onBlur={(e) => setCustomWidth(clampDim(Number(e.target.value)))}
+                className="w-16 h-7 px-1.5 rounded-md bg-white/5 border border-border text-xs text-text text-center outline-none focus:border-accent/50"
+              />
+              <span className="text-muted text-xs">×</span>
+              <input
+                type="number"
+                value={customHeight}
+                onChange={(e) => setCustomHeight(Number(e.target.value))}
+                onBlur={(e) => setCustomHeight(clampDim(Number(e.target.value)))}
+                className="w-16 h-7 px-1.5 rounded-md bg-white/5 border border-border text-xs text-text text-center outline-none focus:border-accent/50"
+              />
+            </div>
+          )}
           <Button variant="ghost" onClick={reset} title="Reset all">
             <RotateCcw size={14} />
           </Button>
