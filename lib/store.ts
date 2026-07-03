@@ -48,6 +48,10 @@ export interface BackgroundState {
     blurKind: "gaussian" | "lens" | "motion";
     blurRadius: number; // 0..80
     motionAngle: number; // degrees, direction of motion blur
+    brightness: number; // 0..2, 1 = normal
+    contrast: number; // 0..2, 1 = normal
+    saturation: number; // 0..2, 1 = normal
+    hue: number; // -180..180 degrees
   };
 }
 
@@ -130,6 +134,10 @@ const initialBg: BackgroundState = {
     blurKind: "gaussian",
     blurRadius: 40,
     motionAngle: 0,
+    brightness: 1,
+    contrast: 1,
+    saturation: 1,
+    hue: 0,
   },
 };
 

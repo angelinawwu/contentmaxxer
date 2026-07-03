@@ -186,6 +186,41 @@ export function BackgroundPanel() {
               unit="°"
             />
           )}
+          <Slider
+            label="Brightness"
+            min={0}
+            max={2}
+            step={0.01}
+            value={background.image.brightness}
+            onChange={(n) => setBgImage({ brightness: n })}
+            format={(n) => `${Math.round(n * 100)}%`}
+          />
+          <Slider
+            label="Contrast"
+            min={0}
+            max={2}
+            step={0.01}
+            value={background.image.contrast}
+            onChange={(n) => setBgImage({ contrast: n })}
+            format={(n) => `${Math.round(n * 100)}%`}
+          />
+          <Slider
+            label="Saturation"
+            min={0}
+            max={2}
+            step={0.01}
+            value={background.image.saturation}
+            onChange={(n) => setBgImage({ saturation: n })}
+            format={(n) => `${Math.round(n * 100)}%`}
+          />
+          <Slider
+            label="Hue"
+            min={-180}
+            max={180}
+            value={background.image.hue}
+            onChange={(n) => setBgImage({ hue: n })}
+            unit="°"
+          />
         </>
       )}
     </Section>

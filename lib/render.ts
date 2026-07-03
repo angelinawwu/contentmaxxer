@@ -89,6 +89,14 @@ export function drawBackground(
     const cy = h / 2 + bg.image.offsetY * h;
 
     const blurPx = bg.image.blurRadius;
+    const adjustFilter = [
+      bg.image.brightness !== 1 ? `brightness(${bg.image.brightness})` : "",
+      bg.image.contrast !== 1 ? `contrast(${bg.image.contrast})` : "",
+      bg.image.saturation !== 1 ? `saturate(${bg.image.saturation})` : "",
+      bg.image.hue !== 0 ? `hue-rotate(${bg.image.hue}deg)` : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
     ctx.translate(cx, cy);
     if (rot !== 0) ctx.rotate(rot);
 
@@ -101,7 +109,8 @@ export function drawBackground(
       const dy = Math.sin(angle);
       const length = blurPx * 2; // total streak length in px
       const baseBlur = Math.min(blurPx * 0.15, 6);
-      ctx.filter = baseBlur > 0 ? `blur(${baseBlur}px)` : "none";
+      const blurFilter = baseBlur > 0 ? `blur(${baseBlur}px)` : "";
+      ctx.filter = [blurFilter, adjustFilter].filter(Boolean).join(" ") || "none";
       ctx.globalAlpha = 1 / samples;
       for (let i = 0; i < samples; i++) {
         const t = i / (samples - 1) - 0.5; // -0.5..0.5
@@ -112,14 +121,13 @@ export function drawBackground(
       ctx.globalAlpha = 1;
       ctx.filter = "none";
     } else {
-      if (blurPx > 0) {
-        ctx.filter =
-          bg.image.blurKind === "lens"
+      const blurFilter =
+        blurPx > 0
+          ? bg.image.blurKind === "lens"
             ? `blur(${blurPx}px) saturate(1.05)`
-            : `blur(${blurPx}px)`;
-      } else {
-        ctx.filter = "none";
-      }
+            : `blur(${blurPx}px)`
+          : "";
+      ctx.filter = [blurFilter, adjustFilter].filter(Boolean).join(" ") || "none";
       ctx.drawImage(bgImage, -drawW / 2, -drawH / 2, drawW, drawH);
       ctx.filter = "none";
     }
